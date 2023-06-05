@@ -11,11 +11,11 @@ require (
 	github.com/miekg/dns v1.1.54
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pires/go-proxyproto v0.7.0
-	github.com/quic-go/quic-go v0.34.0
+	github.com/quic-go/quic-go v0.35.1
 	github.com/refraction-networking/utls v1.3.2
 	github.com/sagernet/sing v0.2.4
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20230331223127-176a94313eda
 	go.starlark.net v0.0.0-20230302034142-4b1e35fe2254
 	golang.org/x/crypto v0.9.0
