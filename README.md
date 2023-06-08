@@ -84,6 +84,7 @@
   - [Shadowrocket](https://apps.apple.com/app/shadowrocket/id932747118)
   - [Stash](https://apps.apple.com/app/stash/id1596063349)
 - Xray Wrapper
+  - [libxray](https://github.com/XTLS/libxray)
   - [xtlsapi](https://github.com/hiddify/xtlsapi)
   - [AndroidLibXrayLite](https://github.com/2dust/AndroidLibXrayLite)
   - [XrayKit](https://github.com/arror/XrayKit)
@@ -106,23 +107,10 @@
 
 ## Credits
 
-This repo relies on the following third-party projects:
-
 - Special thanks:
-  - [v2fly/v2ray-core](https://github.com/v2fly/v2ray-core)
-- In production:
-  - [ghodss/yaml](https://github.com/ghodss/yaml)
-  - [gorilla/websocket](https://github.com/gorilla/websocket)
-  - [quic-go/quic-go](https://github.com/quic-go/quic-go)
-  - [pelletier/go-toml](https://github.com/pelletier/go-toml)
-  - [pires/go-proxyproto](https://github.com/pires/go-proxyproto)
-  - [refraction-networking/utls](https://github.com/refraction-networking/utls)
-  - [seiflotfy/cuckoofilter](https://github.com/seiflotfy/cuckoofilter)
-  - [google/starlark-go](https://github.com/google/starlark-go)
-- For testing only:
-  - [miekg/dns](https://github.com/miekg/dns)
-  - [stretchr/testify](https://github.com/stretchr/testify)
-  - [h12w/socks](https://github.com/h12w/socks)
+  - [v2fly/v2ray-core](https://github.com/v2fly/v2ray-core) (forked from [9a03cc5](https://github.com/v2fly/v2ray-core/commit/9a03cc5c98d04cc28320fcee26dbc236b3291256))
+- This repo relies on the following third-party projects:
+  - check latest [go.mod](https://github.com/XTLS/Xray-core/blob/main/go.mod)
 
 ## Compilation
 
