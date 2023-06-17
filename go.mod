@@ -16,10 +16,10 @@ require (
 	github.com/sagernet/sing v0.2.4
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.8.4
-	github.com/xtls/reality v0.0.0-20230331223127-176a94313eda
+	github.com/xtls/reality v0.0.0-20230613075828-e07c3b04b983
 	golang.org/x/crypto v0.10.0
 	golang.org/x/net v0.11.0
-	golang.org/x/sync v0.2.0
+	golang.org/x/sync v0.3.0
 	golang.org/x/sys v0.9.0
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
