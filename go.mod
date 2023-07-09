@@ -11,17 +11,19 @@ require (
 	github.com/miekg/dns v1.1.55
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pires/go-proxyproto v0.7.0
-	github.com/quic-go/quic-go v0.36.0
+	github.com/quic-go/quic-go v0.36.1
 	github.com/refraction-networking/utls v1.3.2
-	github.com/sagernet/sing v0.2.5
+	github.com/sagernet/sing v0.2.7
+	github.com/sagernet/sing-shadowsocks v0.2.2
+	github.com/sagernet/wireguard-go v0.0.0-20221116151939-c99467f53f2c
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20230613075828-e07c3b04b983
-	golang.org/x/crypto v0.10.0
-	golang.org/x/net v0.11.0
+	golang.org/x/crypto v0.11.0
+	golang.org/x/net v0.12.0
 	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.9.0
-	google.golang.org/grpc v1.56.1
+	golang.org/x/sys v0.10.0
+	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.2.1
