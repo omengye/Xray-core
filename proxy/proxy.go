@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	gotls "crypto/tls"
 	"io"
 	"math/big"
 	"runtime"
@@ -159,21 +158,15 @@ func (w *VisionReader) ReadMultiBuffer() (buf.MultiBuffer, error) {
 				}
 			}
 			buffer = mb2
-			if w.trafficState.RemainingContent == 0 && w.trafficState.RemainingPadding == 0 {
-				if w.trafficState.CurrentCommand == 1 {
-					w.trafficState.WithinPaddingBuffers = false
-				} else if w.trafficState.CurrentCommand == 2 {
-					w.trafficState.WithinPaddingBuffers = false
-					w.trafficState.ReaderSwitchToDirectCopy = true
-				} else if w.trafficState.CurrentCommand == 0 {
-					w.trafficState.WithinPaddingBuffers = true
-				} else {
-					newError("XtlsRead unknown command ", w.trafficState.CurrentCommand, buffer.Len()).WriteToLog(session.ExportIDToError(w.ctx))
-				}
-			} else if w.trafficState.RemainingContent > 0 || w.trafficState.RemainingPadding > 0 {
+			if w.trafficState.RemainingContent > 0 || w.trafficState.RemainingPadding > 0 || w.trafficState.CurrentCommand == 0 {
 				w.trafficState.WithinPaddingBuffers = true
-			} else {
+			} else if w.trafficState.CurrentCommand == 1 {
 				w.trafficState.WithinPaddingBuffers = false
+			} else if w.trafficState.CurrentCommand == 2 {
+				w.trafficState.WithinPaddingBuffers = false
+				w.trafficState.ReaderSwitchToDirectCopy = true
+			} else {
+				newError("XtlsRead unknown command ", w.trafficState.CurrentCommand, buffer.Len()).WriteToLog(session.ExportIDToError(w.ctx))
 			}
 		}
 		if w.trafficState.NumberOfPacketToFilter > 0 {
@@ -455,7 +448,7 @@ func UnwrapRawConn(conn net.Conn) (net.Conn, stats.Counter, stats.Counter) {
 			readCounter = statConn.ReadCounter
 			writerCounter = statConn.WriteCounter
 		}
-		if xc, ok := conn.(*gotls.Conn); ok {
+		if xc, ok := conn.(*tls.Conn); ok {
 			conn = xc.NetConn()
 		} else if utlsConn, ok := conn.(*tls.UConn); ok {
 			conn = utlsConn.NetConn()
