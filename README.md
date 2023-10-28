@@ -91,9 +91,10 @@
 
 - iOS & macOS arm64
   - [Shadowrocket](https://apps.apple.com/app/shadowrocket/id932747118)
-  - [Stash](https://apps.apple.com/app/stash/id1596063349)
+- Xray Tools
+  - [xray-knife](https://github.com/lilendian0x00/xray-knife)
 - Xray Wrapper
-  - [libxray](https://github.com/XTLS/libxray)
+  - [XTLS/libXray](https://github.com/XTLS/libXray)
   - [xtlsapi](https://github.com/hiddify/xtlsapi)
   - [AndroidLibXrayLite](https://github.com/2dust/AndroidLibXrayLite)
   - [XrayKit](https://github.com/arror/XrayKit)
@@ -117,10 +118,8 @@
 
 ## Credits
 
-- Special thanks:
-  - [v2fly/v2ray-core](https://github.com/v2fly/v2ray-core) (forked from [9a03cc5](https://github.com/v2fly/v2ray-core/commit/9a03cc5c98d04cc28320fcee26dbc236b3291256))
-- This repo relies on the following third-party projects:
-  - check latest [go.mod](https://github.com/XTLS/Xray-core/blob/main/go.mod)
+- [Xray-core v1.0.0](https://github.com/XTLS/Xray-core/releases/tag/v1.0.0) was forked from [v2fly-core 9a03cc5](https://github.com/v2fly/v2ray-core/commit/9a03cc5c98d04cc28320fcee26dbc236b3291256), and we have made & accumulated a huge number of enhancements over time, check [the release notes for each version](https://github.com/XTLS/Xray-core/releases).
+- For third-party projects used in [Xray-core](https://github.com/XTLS/Xray-core), check your local or [the latest go.mod](https://github.com/XTLS/Xray-core/blob/main/go.mod).
 
 ## Compilation
 
