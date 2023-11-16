@@ -10,7 +10,6 @@ import (
 	"github.com/xtls/xray-core/transport/internet/headers/tls"
 	"github.com/xtls/xray-core/transport/internet/headers/utp"
 	"github.com/xtls/xray-core/transport/internet/headers/wechat"
-	"github.com/xtls/xray-core/transport/internet/headers/wireguard"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -42,12 +41,6 @@ type WechatVideoAuthenticator struct{}
 
 func (WechatVideoAuthenticator) Build() (proto.Message, error) {
 	return new(wechat.VideoConfig), nil
-}
-
-type WireguardAuthenticator struct{}
-
-func (WireguardAuthenticator) Build() (proto.Message, error) {
-	return new(wireguard.WireguardConfig), nil
 }
 
 type DNSAuthenticator struct {
