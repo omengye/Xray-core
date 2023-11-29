@@ -17,8 +17,8 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
 	go4.org/netipx v0.0.0-20230824141953-6213f710f925
-	golang.org/x/crypto v0.15.0
-	golang.org/x/net v0.18.0
+	golang.org/x/crypto v0.16.0
+	golang.org/x/net v0.19.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/sys v0.14.0
 	google.golang.org/grpc v1.59.0
