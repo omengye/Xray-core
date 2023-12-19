@@ -13,7 +13,6 @@ require (
 	github.com/quic-go/quic-go v0.40.1
 	github.com/refraction-networking/utls v1.6.0
 	github.com/sagernet/sing v0.3.0-beta.2
-	github.com/sagernet/sing-shadowsocks v0.2.6
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
