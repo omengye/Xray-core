@@ -40,7 +40,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
 	github.com/onsi/ginkgo/v2 v2.13.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/quic-go/qtls-go1-20 v0.4.1 // indirect
+	github.com/quic-go/qtls-go1-20 v0.4.1 // indirectK
 	go.uber.org/mock v0.3.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/mod v0.14.0 // indirect
