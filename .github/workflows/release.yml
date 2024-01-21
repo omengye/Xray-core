@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Restore Cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: resources
           key: xray-geodat-
@@ -49,7 +49,7 @@ jobs:
             done
 
       - name: Save Cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: ${{ steps.update.outputs.unhit }}
         with:
           path: resources
@@ -113,7 +113,7 @@ jobs:
           mv xray xray.exe
 
       - name: Restore Cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: resources
           key: xray-geodat-
