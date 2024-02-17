@@ -17,11 +17,12 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.18.0
-	golang.org/x/net v0.20.0
+	golang.org/x/crypto v0.19.0
+	golang.org/x/net v0.21.0
 	golang.org/x/sync v0.6.0
-	golang.org/x/sys v0.16.0
-	google.golang.org/grpc v1.61.0
+	golang.org/x/sys v0.17.0
+	golang.zx2c4.com/wireguard v0.0.0-20231211153847-12269c276173
+	google.golang.org/grpc v1.61.1
 	google.golang.org/protobuf v1.32.0
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.2.1
