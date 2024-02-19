@@ -46,8 +46,8 @@ type Conn struct {
 	*reality.Conn
 }
 
-func (c *Conn) HandshakeAddress() net.Address {
-	if err := c.Handshake(); err != nil {
+func (c *Conn) HandshakeAddressContext(ctx context.Context) net.Address {
+	if err := c.HandshakeContext(ctx); err != nil {
 		return nil
 	}
 	state := c.ConnectionState()
@@ -69,8 +69,18 @@ type UConn struct {
 	Verified   bool
 }
 
-func (c *UConn) HandshakeAddress() net.Address {
-	if err := c.Handshake(); err != nil {
+const realityCloseTimeout = 250 * time.Millisecond
+
+func (c *UConn) Close() error {
+	timer := time.AfterFunc(realityCloseTimeout, func() {
+		c.UConn.NetConn().Close()
+	})
+	defer timer.Stop()
+	return c.UConn.Close()
+}
+
+func (c *UConn) HandshakeAddressContext(ctx context.Context) net.Address {
+	if err := c.HandshakeContext(ctx); err != nil {
 		return nil
 	}
 	state := c.ConnectionState()
