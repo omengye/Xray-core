@@ -1,6 +1,6 @@
 module github.com/xtls/xray-core
 
-go 1.21.4
+go 1.22
 
 require (
 	github.com/ghodss/yaml v1.0.1-0.20220118164431-d8423dcdf344
@@ -11,8 +11,8 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pires/go-proxyproto v0.7.0
 	github.com/quic-go/quic-go v0.41.0
-	github.com/refraction-networking/utls v1.6.2
-	github.com/sagernet/sing v0.3.0
+	github.com/refraction-networking/utls v1.6.3
+	github.com/sagernet/sing v0.3.2
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
@@ -21,7 +21,7 @@ require (
 	golang.org/x/net v0.21.0
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.17.0
-	google.golang.org/grpc v1.61.1
+	google.golang.org/grpc v1.62.0
 	google.golang.org/protobuf v1.32.0
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.2.1
@@ -45,7 +45,7 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240102182953-50ed04b92917 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
