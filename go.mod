@@ -12,12 +12,12 @@ require (
 	github.com/pires/go-proxyproto v0.7.0
 	github.com/quic-go/quic-go v0.41.0
 	github.com/refraction-networking/utls v1.6.3
-	github.com/sagernet/sing v0.3.2
+	github.com/sagernet/sing v0.3.3
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.8.4
 	github.com/xtls/reality v0.0.0-20231112171332-de1173cf2b19
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-	golang.org/x/crypto v0.19.0
+	golang.org/x/crypto v0.20.0
 	golang.org/x/net v0.21.0
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.17.0
