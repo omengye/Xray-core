@@ -182,6 +182,7 @@ func (c *WebSocketConfig) Build() (proto.Message, error) {
 type HttpUpgradeConfig struct {
 	Path                string `json:"path"`
 	Host                string `json:"host"`
+	Headers             map[string]string `json:"headers"`
 	AcceptProxyProtocol bool   `json:"acceptProxyProtocol"`
 }
 
@@ -201,6 +202,7 @@ func (c *HttpUpgradeConfig) Build() (proto.Message, error) {
 	config := &httpupgrade.Config{
 		Path:                path,
 		Host:                c.Host,
+		Header:              c.Headers,
 		AcceptProxyProtocol: c.AcceptProxyProtocol,
 		Ed:                  ed,
 	}
