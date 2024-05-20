@@ -174,17 +174,17 @@ func DecodeResponseHeader(reader io.Reader, request *protocol.RequestHeader) (*A
 }
 
 // XtlsRead filter and read xtls protocol
-func XtlsRead(reader buf.Reader, writer buf.Writer, timer signal.ActivityUpdater, conn net.Conn, input *bytes.Reader, rawInput *bytes.Buffer, trafficState *proxy.TrafficState, ob *session.Outbound, ctx context.Context) error {
+func XtlsRead(reader buf.Reader, writer buf.Writer, timer *signal.ActivityTimer, conn net.Conn, input *bytes.Reader, rawInput *bytes.Buffer, trafficState *proxy.TrafficState, ob *session.Outbound, ctx context.Context) error {
 	err := func() error {
 		for {
 			if trafficState.ReaderSwitchToDirectCopy {
 				var writerConn net.Conn
-				if inbound := session.InboundFromContext(ctx); inbound != nil && inbound.Conn != nil && ob != nil {
+				if inbound := session.InboundFromContext(ctx); inbound != nil && inbound.Conn != nil {
 					writerConn = inbound.Conn
 					if inbound.CanSpliceCopy == 2 {
 						inbound.CanSpliceCopy = 1
 					}
-					if ob.CanSpliceCopy == 2 { // ob need to be passed in due to context can change
+					if ob != nil && ob.CanSpliceCopy == 2 { // ob need to be passed in due to context can change
 						ob.CanSpliceCopy = 1
 					}
 				}
@@ -228,11 +228,11 @@ func XtlsWrite(reader buf.Reader, writer buf.Writer, timer signal.ActivityUpdate
 		for {
 			buffer, err := reader.ReadMultiBuffer()
 			if trafficState.WriterSwitchToDirectCopy {
-				if inbound := session.InboundFromContext(ctx); inbound != nil && ob != nil {
+				if inbound := session.InboundFromContext(ctx); inbound != nil {
 					if inbound.CanSpliceCopy == 2 {
 						inbound.CanSpliceCopy = 1
 					}
-					if ob.CanSpliceCopy == 2 {
+					if ob != nil && ob.CanSpliceCopy == 2 {
 						ob.CanSpliceCopy = 1
 					}
 				}
