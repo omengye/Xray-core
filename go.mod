@@ -15,7 +15,7 @@ require (
 	github.com/quic-go/quic-go v0.45.1
 	github.com/refraction-networking/utls v1.6.7
 	github.com/sagernet/sing v0.4.1
-	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
+	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.9.0
 	github.com/xtls/reality v0.0.0-20240712055506-48f0b2d5ed6d
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
