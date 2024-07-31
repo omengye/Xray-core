@@ -229,9 +229,9 @@ type SplitHTTPConfig struct {
 	Host                 string            `json:"host"`
 	Path                 string            `json:"path"`
 	Headers              map[string]string `json:"headers"`
-	MaxConcurrentUploads Int32Range        `json:"maxConcurrentUploads"`
-	MaxUploadSize        Int32Range        `json:"maxUploadSize"`
-	MinUploadIntervalMs  Int32Range        `json:"minUploadIntervalMs"`
+	ScMaxConcurrentPosts Int32Range        `json:"scMaxConcurrentPosts"`
+	ScMaxEachPostBytes   Int32Range        `json:"scMaxEachPostBytes"`
+	ScMinPostsIntervalMs Int32Range        `json:"scMinPostsIntervalMs"`
 	NoSSEHeader          bool              `json:"noSSEHeader"`
 }
 
@@ -249,17 +249,17 @@ func (c *SplitHTTPConfig) Build() (proto.Message, error) {
 		Path:   c.Path,
 		Host:   c.Host,
 		Header: c.Headers,
-		MaxConcurrentUploads: &splithttp.RandRangeConfig{
-			From: c.MaxConcurrentUploads.From,
-			To:   c.MaxConcurrentUploads.To,
+		ScMaxConcurrentPosts: &splithttp.RandRangeConfig{
+			From: c.ScMaxConcurrentPosts.From,
+			To:   c.ScMaxConcurrentPosts.To,
 		},
-		MaxUploadSize: &splithttp.RandRangeConfig{
-			From: c.MaxUploadSize.From,
-			To:   c.MaxUploadSize.To,
+		ScMaxEachPostBytes: &splithttp.RandRangeConfig{
+			From: c.ScMaxEachPostBytes.From,
+			To:   c.ScMaxEachPostBytes.To,
 		},
-		MinUploadIntervalMs: &splithttp.RandRangeConfig{
-			From: c.MinUploadIntervalMs.From,
-			To:   c.MinUploadIntervalMs.To,
+		ScMinPostsIntervalMs: &splithttp.RandRangeConfig{
+			From: c.ScMinPostsIntervalMs.From,
+			To:   c.ScMinPostsIntervalMs.To,
 		},
 		NoSSEHeader: c.NoSSEHeader,
 	}
@@ -385,6 +385,7 @@ type TLSCertConfig struct {
 	Usage          string   `json:"usage"`
 	OcspStapling   uint64   `json:"ocspStapling"`
 	OneTimeLoading bool     `json:"oneTimeLoading"`
+	BuildChain     bool     `json:"buildChain"`
 }
 
 // Build implements Buildable.
@@ -423,6 +424,7 @@ func (c *TLSCertConfig) Build() (*tls.Certificate, error) {
 		certificate.OneTimeLoading = c.OneTimeLoading
 	}
 	certificate.OcspStapling = c.OcspStapling
+	certificate.BuildChain = c.BuildChain
 
 	return certificate, nil
 }
