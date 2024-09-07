@@ -385,28 +385,15 @@ type Config struct {
 	// and should not be used.
 	Port uint16 `json:"port"`
 
-	// Deprecated: InboundConfig exists for historical compatibility
-	// and should not be used.
-	InboundConfig *InboundDetourConfig `json:"inbound"`
-
-	// Deprecated: OutboundConfig exists for historical compatibility
-	// and should not be used.
-	OutboundConfig *OutboundDetourConfig `json:"outbound"`
-
-	// Deprecated: InboundDetours exists for historical compatibility
-	// and should not be used.
-	InboundDetours []InboundDetourConfig `json:"inboundDetour"`
-
-	// Deprecated: OutboundDetours exists for historical compatibility
-	// and should not be used.
-	OutboundDetours []OutboundDetourConfig `json:"outboundDetour"`
+	// Deprecated: Global transport config is no longer used
+	// left for returning error
+	Transport        map[string]json.RawMessage `json:"transport"`
 
 	LogConfig        *LogConfig              `json:"log"`
 	RouterConfig     *RouterConfig           `json:"routing"`
 	DNSConfig        *DNSConfig              `json:"dns"`
 	InboundConfigs   []InboundDetourConfig   `json:"inbounds"`
 	OutboundConfigs  []OutboundDetourConfig  `json:"outbounds"`
-	Transport        *TransportConfig        `json:"transport"`
 	Policy           *PolicyConfig           `json:"policy"`
 	API              *APIConfig              `json:"api"`
 	Metrics          *MetricsConfig          `json:"metrics"`
@@ -483,21 +470,6 @@ func (c *Config) Override(o *Config, fn string) {
 		c.BurstObservatory = o.BurstObservatory
 	}
 
-	// deprecated attrs... keep them for now
-	if o.InboundConfig != nil {
-		c.InboundConfig = o.InboundConfig
-	}
-	if o.OutboundConfig != nil {
-		c.OutboundConfig = o.OutboundConfig
-	}
-	if o.InboundDetours != nil {
-		c.InboundDetours = o.InboundDetours
-	}
-	if o.OutboundDetours != nil {
-		c.OutboundDetours = o.OutboundDetours
-	}
-	// deprecated attrs
-
 	// update the Inbound in slice if the only one in override config has same tag
 	if len(o.InboundConfigs) > 0 {
 		for i := range o.InboundConfigs {
@@ -533,27 +505,6 @@ func (c *Config) Override(o *Config, fn string) {
 		if !strings.Contains(strings.ToLower(fn), "tail") && len(outboundPrepends) > 0 {
 			c.OutboundConfigs = append(outboundPrepends, c.OutboundConfigs...)
 		}
-	}
-}
-
-func applyTransportConfig(s *StreamConfig, t *TransportConfig) {
-	if s.TCPSettings == nil {
-		s.TCPSettings = t.TCPConfig
-	}
-	if s.KCPSettings == nil {
-		s.KCPSettings = t.KCPConfig
-	}
-	if s.WSSettings == nil {
-		s.WSSettings = t.WSConfig
-	}
-	if s.HTTPSettings == nil {
-		s.HTTPSettings = t.HTTPConfig
-	}
-	if s.HTTPUPGRADESettings == nil {
-		s.HTTPUPGRADESettings = t.HTTPUPGRADEConfig
-	}
-	if s.SplitHTTPSettings == nil {
-		s.SplitHTTPSettings = t.SplitHTTPConfig
 	}
 }
 
@@ -661,14 +612,6 @@ func (c *Config) Build() (*core.Config, error) {
 
 	var inbounds []InboundDetourConfig
 
-	if c.InboundConfig != nil {
-		inbounds = append(inbounds, *c.InboundConfig)
-	}
-
-	if len(c.InboundDetours) > 0 {
-		inbounds = append(inbounds, c.InboundDetours...)
-	}
-
 	if len(c.InboundConfigs) > 0 {
 		inbounds = append(inbounds, c.InboundConfigs...)
 	}
@@ -681,13 +624,11 @@ func (c *Config) Build() (*core.Config, error) {
 		}}}
 	}
 
+	if len(c.Transport) > 0 {
+		return nil, errors.New("Global transport config is deprecated")
+	}
+
 	for _, rawInboundConfig := range inbounds {
-		if c.Transport != nil {
-			if rawInboundConfig.StreamSetting == nil {
-				rawInboundConfig.StreamSetting = &StreamConfig{}
-			}
-			applyTransportConfig(rawInboundConfig.StreamSetting, c.Transport)
-		}
 		ic, err := rawInboundConfig.Build()
 		if err != nil {
 			return nil, err
@@ -697,25 +638,11 @@ func (c *Config) Build() (*core.Config, error) {
 
 	var outbounds []OutboundDetourConfig
 
-	if c.OutboundConfig != nil {
-		outbounds = append(outbounds, *c.OutboundConfig)
-	}
-
-	if len(c.OutboundDetours) > 0 {
-		outbounds = append(outbounds, c.OutboundDetours...)
-	}
-
 	if len(c.OutboundConfigs) > 0 {
 		outbounds = append(outbounds, c.OutboundConfigs...)
 	}
 
 	for _, rawOutboundConfig := range outbounds {
-		if c.Transport != nil {
-			if rawOutboundConfig.StreamSetting == nil {
-				rawOutboundConfig.StreamSetting = &StreamConfig{}
-			}
-			applyTransportConfig(rawOutboundConfig.StreamSetting, c.Transport)
-		}
 		oc, err := rawOutboundConfig.Build()
 		if err != nil {
 			return nil, err
