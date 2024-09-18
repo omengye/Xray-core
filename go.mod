@@ -14,7 +14,7 @@ require (
 	github.com/pires/go-proxyproto v0.7.0
 	github.com/quic-go/quic-go v0.46.0
 	github.com/refraction-networking/utls v1.6.7
-	github.com/sagernet/sing v0.4.1
+	github.com/sagernet/sing v0.4.3
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.9.0
 	github.com/xtls/reality v0.0.0-20240712055506-48f0b2d5ed6d
@@ -23,7 +23,7 @@ require (
 	golang.org/x/net v0.29.0
 	golang.org/x/sync v0.8.0
 	golang.org/x/sys v0.25.0
-	google.golang.org/grpc v1.66.0
+	google.golang.org/grpc v1.66.2
 	google.golang.org/protobuf v1.34.2
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.3.0
