@@ -19,6 +19,7 @@ import (
 	"github.com/xtls/xray-core/common/uuid"
 	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/browser_dialer"
+	"github.com/xtls/xray-core/transport/internet/reality"
 	"github.com/xtls/xray-core/transport/internet/stat"
 	"github.com/xtls/xray-core/transport/internet/tls"
 	"github.com/xtls/xray-core/transport/pipe"
@@ -46,7 +47,9 @@ var (
 )
 
 func getHTTPClient(ctx context.Context, dest net.Destination, streamSettings *internet.MemoryStreamConfig) (DialerClient, *muxResource) {
-	if browser_dialer.HasBrowserDialer() {
+	realityConfig := reality.ConfigFromStreamSettings(streamSettings)
+
+	if browser_dialer.HasBrowserDialer() && realityConfig != nil {
 		return &BrowserDialerClient{}, nil
 	}
 
@@ -80,8 +83,18 @@ func getHTTPClient(ctx context.Context, dest net.Destination, streamSettings *in
 
 func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStreamConfig) DialerClient {
 	tlsConfig := tls.ConfigFromStreamSettings(streamSettings)
-	isH2 := tlsConfig != nil && !(len(tlsConfig.NextProtocol) == 1 && tlsConfig.NextProtocol[0] == "http/1.1")
-	isH3 := tlsConfig != nil && (len(tlsConfig.NextProtocol) == 1 && tlsConfig.NextProtocol[0] == "h3")
+	realityConfig := reality.ConfigFromStreamSettings(streamSettings)
+
+	isH2 := false
+	isH3 := false
+
+	if tlsConfig != nil {
+		isH2 = !(len(tlsConfig.NextProtocol) == 1 && tlsConfig.NextProtocol[0] == "http/1.1")
+		isH3 = len(tlsConfig.NextProtocol) == 1 && tlsConfig.NextProtocol[0] == "h3"
+	} else if realityConfig != nil {
+		isH2 = true
+		isH3 = false
+	}
 
 	if isH3 {
 		dest.Network = net.Network_UDP
@@ -99,6 +112,10 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 		conn, err := internet.DialSystem(ctxInner, dest, streamSettings.SocketSettings)
 		if err != nil {
 			return nil, err
+		}
+
+		if realityConfig != nil {
+			return reality.UClient(conn, realityConfig, ctxInner, dest)
 		}
 
 		if gotlsConfig != nil {
@@ -215,12 +232,13 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 
 	transportConfiguration := streamSettings.ProtocolSettings.(*Config)
 	tlsConfig := tls.ConfigFromStreamSettings(streamSettings)
+	realityConfig := reality.ConfigFromStreamSettings(streamSettings)
 
 	scMaxConcurrentPosts := transportConfiguration.GetNormalizedScMaxConcurrentPosts()
 	scMaxEachPostBytes := transportConfiguration.GetNormalizedScMaxEachPostBytes()
 	scMinPostsIntervalMs := transportConfiguration.GetNormalizedScMinPostsIntervalMs()
 
-	if tlsConfig != nil {
+	if tlsConfig != nil || realityConfig != nil {
 		requestURL.Scheme = "https"
 	} else {
 		requestURL.Scheme = "http"
@@ -235,6 +253,30 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 	requestURL.RawQuery = transportConfiguration.GetNormalizedQuery()
 
 	httpClient, muxResource := getHTTPClient(ctx, dest, streamSettings)
+
+	var httpClient2 DialerClient
+	var requestURL2 url.URL
+	if transportConfiguration.DownloadSettings != nil {
+		dest2 := net.Destination{
+			Address: transportConfiguration.DownloadSettings.Address.AsAddress(), // just panic
+			Port:    net.Port(transportConfiguration.DownloadSettings.Port),
+			Network: net.Network_TCP,
+		}
+		memory2 := common.Must2(internet.ToMemoryStreamConfig(transportConfiguration.DownloadSettings)).(*internet.MemoryStreamConfig)
+		httpClient2, _ = getHTTPClient(ctx, dest2, memory2) // no multiplex
+		if tls.ConfigFromStreamSettings(memory2) != nil || reality.ConfigFromStreamSettings(memory2) != nil {
+			requestURL2.Scheme = "https"
+		} else {
+			requestURL2.Scheme = "http"
+		}
+		config2 := memory2.ProtocolSettings.(*Config)
+		requestURL2.Host = config2.Host
+		if requestURL2.Host == "" {
+			requestURL2.Host = dest2.NetAddr()
+		}
+		requestURL2.Path = requestURL.Path // the same
+		requestURL2.RawQuery = config2.GetNormalizedQuery()
+	}
 
 	maxUploadSize := scMaxEachPostBytes.roll()
 	// WithSizeLimit(0) will still allow single bytes to pass, and a lot of
@@ -303,7 +345,14 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 		}
 	}()
 
-	reader, remoteAddr, localAddr, err := httpClient.OpenDownload(context.WithoutCancel(ctx), requestURL.String())
+	httpClient3 := httpClient
+	requestURL3 := requestURL
+	if httpClient2 != nil {
+		httpClient3 = httpClient2
+		requestURL3 = requestURL2
+	}
+
+	reader, remoteAddr, localAddr, err := httpClient3.OpenDownload(context.WithoutCancel(ctx), requestURL3.String())
 	if err != nil {
 		return nil, err
 	}
