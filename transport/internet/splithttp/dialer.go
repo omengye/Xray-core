@@ -3,6 +3,7 @@ package splithttp
 import (
 	"context"
 	gotls "crypto/tls"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -31,10 +32,10 @@ import (
 const connIdleTimeout = 300 * time.Second
 
 // consistent with quic-go
-const h3KeepalivePeriod = 10 * time.Second
+const quicgoH3KeepAlivePeriod = 10 * time.Second
 
 // consistent with chrome
-const h2KeepalivePeriod = 45 * time.Second
+const chromeH2KeepAlivePeriod = 45 * time.Second
 
 type dialerConf struct {
 	net.Destination
@@ -132,9 +133,17 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 		return conn, nil
 	}
 
+	keepAlivePeriod := time.Duration(streamSettings.ProtocolSettings.(*Config).KeepAlivePeriod) * time.Second
+
 	var transport http.RoundTripper
 
 	if isH3 {
+		if keepAlivePeriod == 0 {
+			keepAlivePeriod = quicgoH3KeepAlivePeriod
+		}
+		if keepAlivePeriod < 0 {
+			keepAlivePeriod = 0
+		}
 		quicConfig := &quic.Config{
 			MaxIdleTimeout: connIdleTimeout,
 
@@ -142,7 +151,7 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 			// http3) is different, so it is hardcoded here for clarity.
 			// https://github.com/quic-go/quic-go/blob/b8ea5c798155950fb5bbfdd06cad1939c9355878/http3/client.go#L36-L39
 			MaxIncomingStreams: -1,
-			KeepAlivePeriod:    h3KeepalivePeriod,
+			KeepAlivePeriod:    keepAlivePeriod,
 		}
 		transport = &http3.RoundTripper{
 			QUICConfig:      quicConfig,
@@ -185,12 +194,18 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 			},
 		}
 	} else if isH2 {
+		if keepAlivePeriod == 0 {
+			keepAlivePeriod = chromeH2KeepAlivePeriod
+		}
+		if keepAlivePeriod < 0 {
+			keepAlivePeriod = 0
+		}
 		transport = &http2.Transport{
 			DialTLSContext: func(ctxInner context.Context, network string, addr string, cfg *gotls.Config) (net.Conn, error) {
 				return dialContext(ctxInner)
 			},
 			IdleConnTimeout: connIdleTimeout,
-			ReadIdleTimeout: h2KeepalivePeriod,
+			ReadIdleTimeout: keepAlivePeriod,
 		}
 	} else {
 		httpDialContext := func(ctxInner context.Context, network string, addr string) (net.Conn, error) {
@@ -201,7 +216,7 @@ func createHTTPClient(dest net.Destination, streamSettings *internet.MemoryStrea
 			DialTLSContext:  httpDialContext,
 			DialContext:     httpDialContext,
 			IdleConnTimeout: connIdleTimeout,
-			// chunked transfer download with keepalives is buggy with
+			// chunked transfer download with KeepAlives is buggy with
 			// http.Client and our custom dial context.
 			DisableKeepAlives: true,
 		}
@@ -279,9 +294,33 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 		requestURL2.RawQuery = config2.GetNormalizedQuery()
 	}
 
-	reader, remoteAddr, localAddr, err := httpClient2.OpenDownload(context.WithoutCancel(ctx), requestURL2.String())
-	if err != nil {
-		return nil, err
+	mode := transportConfiguration.Mode
+	if mode == "" || mode == "auto" {
+		mode = "packet-up"
+		if (tlsConfig != nil && (len(tlsConfig.NextProtocol) != 1 || tlsConfig.NextProtocol[0] == "h2")) || realityConfig != nil {
+			mode = "stream-up"
+		}
+		if realityConfig != nil && transportConfiguration.DownloadSettings == nil {
+			mode = "stream-one"
+		}
+	}
+	errors.LogInfo(ctx, "XHTTP is using mode: "+mode)
+
+	var writer io.WriteCloser
+	var reader io.ReadCloser
+	var remoteAddr, localAddr net.Addr
+	var err error
+
+	if mode == "stream-one" {
+		requestURL.Path = transportConfiguration.GetNormalizedPath()
+		writer, reader = httpClient.Open(context.WithoutCancel(ctx), requestURL.String())
+		remoteAddr = &net.TCPAddr{}
+		localAddr = &net.TCPAddr{}
+	} else {
+		reader, remoteAddr, localAddr, err = httpClient2.OpenDownload(context.WithoutCancel(ctx), requestURL2.String())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if muxRes != nil {
@@ -293,7 +332,7 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 	closed := false
 
 	conn := splitConn{
-		writer:     nil,
+		writer:     writer,
 		reader:     reader,
 		remoteAddr: remoteAddr,
 		localAddr:  localAddr,
@@ -311,14 +350,9 @@ func Dial(ctx context.Context, dest net.Destination, streamSettings *internet.Me
 		},
 	}
 
-	mode := transportConfiguration.Mode
-	if mode == "auto" {
-		mode = "packet-up"
-		if (tlsConfig != nil && len(tlsConfig.NextProtocol) != 1) || realityConfig != nil {
-			mode = "stream-up"
-		}
+	if mode == "stream-one" {
+		return stat.Connection(&conn), nil
 	}
-	errors.LogInfo(ctx, "XHTTP is using mode: "+mode)
 	if mode == "stream-up" {
 		conn.writer = httpClient.OpenUpload(ctx, requestURL.String())
 		return stat.Connection(&conn), nil
