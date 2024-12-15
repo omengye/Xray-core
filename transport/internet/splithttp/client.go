@@ -39,8 +39,7 @@ type DialerClient interface {
 type DefaultDialerClient struct {
 	transportConfig *Config
 	client          *http.Client
-	isH2            bool
-	isH3            bool
+	httpVersion     string
 	// pool of net.Conn, created using dialUploadConn
 	uploadRawPool  *sync.Pool
 	dialUploadConn func(ctxInner context.Context) (net.Conn, error)
@@ -141,14 +140,7 @@ func (c *DefaultDialerClient) OpenDownload(ctx context.Context, baseURL string) 
 		gotDownResponse.Close()
 	}()
 
-	if !c.isH3 {
-		// in quic-go, sometimes gotConn is never closed for the lifetime of
-		// the entire connection, and the download locks up
-		// https://github.com/quic-go/quic-go/issues/3342
-		// for other HTTP versions, we want to block Dial until we know the
-		// remote address of the server, for logging purposes
-		<-gotConn.Wait()
-	}
+	<-gotConn.Wait()
 
 	lazyDownload := &LazyReader{
 		CreateReader: func() (io.Reader, error) {
@@ -172,14 +164,14 @@ func (c *DefaultDialerClient) OpenDownload(ctx context.Context, baseURL string) 
 }
 
 func (c *DefaultDialerClient) SendUploadRequest(ctx context.Context, url string, payload io.ReadWriteCloser, contentLength int64) error {
-	req, err := http.NewRequest("POST", url, payload)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, payload)
 	if err != nil {
 		return err
 	}
 	req.ContentLength = contentLength
 	req.Header = c.transportConfig.GetRequestHeader()
 
-	if c.isH2 || c.isH3 {
+	if c.httpVersion != "1.1" {
 		resp, err := c.client.Do(req)
 		if err != nil {
 			return err
