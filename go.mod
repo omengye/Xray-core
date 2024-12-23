@@ -16,7 +16,6 @@ require (
 	github.com/sagernet/sing v0.5.1
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.10.0
-	github.com/vishvananda/netlink v1.3.0
 	github.com/xtls/quic-go v0.0.0-20241220091641-6f5777d1c087
 	github.com/xtls/reality v0.0.0-20240712055506-48f0b2d5ed6d
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
