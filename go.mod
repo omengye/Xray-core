@@ -24,7 +24,7 @@ require (
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.28.0
 	google.golang.org/grpc v1.67.1
-	google.golang.org/protobuf v1.36.0
+	google.golang.org/protobuf v1.36.1
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.3.0
 )
