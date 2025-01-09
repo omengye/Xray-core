@@ -32,7 +32,6 @@ jobs:
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
-      GOARM: ${{ matrix.goarm }}
       CGO_ENABLED: 0
     steps:
       - name: Checkout codebase
@@ -41,8 +40,8 @@ jobs:
       - name: Show workflow information
         run: |
           _NAME=${{ matrix.patch-assetname }}
-          [ -n "$_NAME" ] || _NAME=$(jq ".[\"$GOOS-$GOARCH$GOARM$GOMIPS\"].friendlyName" -r < .github/build/friendly-filenames.json)
-          echo "GOOS: $GOOS, GOARCH: $GOARCH, GOARM: $GOARM, GOMIPS: $GOMIPS, RELEASE_NAME: $_NAME"
+          [ -n "$_NAME" ] || _NAME=$(jq ".[\"$GOOS-$GOARCH\"].friendlyName" -r < .github/build/friendly-filenames.json)
+          echo "GOOS: $GOOS, GOARCH: $GOARCH, RELEASE_NAME: $_NAME"
           echo "ASSET_NAME=$_NAME" >> $GITHUB_ENV
 
       - name: Set up Go

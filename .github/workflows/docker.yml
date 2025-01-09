@@ -53,8 +53,6 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-            linux/loong64
-            linux/riscv64
           provenance: false
           file: .github/docker/Dockerfile
           push: true
@@ -66,8 +64,6 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-            linux/loong64
-            linux/riscv64
           provenance: false
           file: .github/docker/Dockerfile
           build-args: flavor=loyalsoldier
