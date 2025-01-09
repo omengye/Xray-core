@@ -25,6 +25,7 @@ require (
 	golang.org/x/sys v0.28.0
 	google.golang.org/grpc v1.69.2
 	google.golang.org/protobuf v1.36.1
+	gvisor.dev/gvisor v0.0.0-20240320123526-dc6abceb7ff0
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.3.0
 )
@@ -42,9 +43,10 @@ require (
 	github.com/quic-go/qpack v0.5.1 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc // indirect
-	golang.org/x/mod v0.18.0 // indirect
+	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
-	golang.org/x/tools v0.22.0 // indirect
+	golang.org/x/time v0.7.0 // indirect
+	golang.org/x/tools v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
