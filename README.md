@@ -24,7 +24,9 @@
 
 [Project X Channel](https://t.me/projectXtls)
 
-[Project VLESS](https://t.me/projectVless) (non-Chinese)
+[Project VLESS](https://t.me/projectVless) (Русский)
+
+[Project XHTTP](https://t.me/projectXhttp) (Persian)
 
 ## Installation
 
@@ -98,6 +100,7 @@
   - [Shadowrocket](https://apps.apple.com/app/shadowrocket/id932747118)
 - Xray Tools
   - [xray-knife](https://github.com/lilendian0x00/xray-knife)
+  - [xray-checker](https://github.com/kutovoys/xray-checker)
 - Xray Wrapper
   - [XTLS/libXray](https://github.com/XTLS/libXray)
   - [xtlsapi](https://github.com/hiddify/xtlsapi)
