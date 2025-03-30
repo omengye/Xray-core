@@ -9,6 +9,7 @@ import (
 	"github.com/xtls/xray-core/app/router"
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/session"
 	"github.com/xtls/xray-core/common/strmatcher"
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/features/dns"
@@ -25,11 +26,14 @@ type Server interface {
 
 // Client is the interface for DNS client.
 type Client struct {
-	server       Server
-	clientIP     net.IP
-	skipFallback bool
-	domains      []string
-	expectIPs    []*router.GeoIPMatcher
+	server             Server
+	clientIP           net.IP
+	skipFallback       bool
+	domains            []string
+	expectIPs          []*router.GeoIPMatcher
+	allowUnexpectedIPs bool
+	tag                string
+	timeoutMs          time.Duration
 }
 
 var errExpectedIPNonMatch = errors.New("expectIPs not match")
@@ -161,11 +165,21 @@ func NewClient(
 			}
 		}
 
+		var timeoutMs time.Duration
+		if ns.TimeoutMs > 0 {
+			timeoutMs = time.Duration(ns.TimeoutMs) * time.Millisecond
+		} else {
+			timeoutMs = 4000 * time.Millisecond
+		}
+
 		client.server = server
 		client.clientIP = clientIP
 		client.skipFallback = ns.SkipFallback
 		client.domains = rules
 		client.expectIPs = matchers
+		client.allowUnexpectedIPs = ns.AllowUnexpectedIPs
+		client.tag = ns.Tag
+		client.timeoutMs = timeoutMs
 		return nil
 	})
 	return client, err
@@ -178,7 +192,14 @@ func (c *Client) Name() string {
 
 // QueryIP sends DNS query to the name server with the client's IP.
 func (c *Client) QueryIP(ctx context.Context, domain string, option dns.IPOption, disableCache bool) ([]net.IP, error) {
-	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, c.timeoutMs)
+	if len(c.tag) != 0 {
+		content := session.InboundFromContext(ctx)
+		errors.LogDebug(ctx, "DNS: client override tag from ", content.Tag, " to ", c.tag)
+		// create a new context to override the tag
+		// do not direct set *content.Tag, it might be used by other clients
+		ctx = session.ContextWithInbound(ctx, &session.Inbound{Tag: c.tag})
+	}
 	ips, err := c.server.QueryIP(ctx, domain, c.clientIP, option, disableCache)
 	cancel()
 
@@ -203,6 +224,9 @@ func (c *Client) MatchExpectedIPs(domain string, ips []net.IP) ([]net.IP, error)
 		}
 	}
 	if len(newIps) == 0 {
+		if c.allowUnexpectedIPs {
+			return ips, nil
+		}
 		return nil, errExpectedIPNonMatch
 	}
 	errors.LogDebug(context.Background(), "domain ", domain, " expectIPs ", newIps, " matched at server ", c.Name())
