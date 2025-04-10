@@ -41,9 +41,15 @@ func applyOutboundSocketOptions(network string, address string, fd uintptr, conf
 			if err := syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IP, IP_UNICAST_IF, int(idx)); err != nil {
 				return errors.New("failed to set IP_UNICAST_IF").Base(err)
 			}
+			if err := syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IP, syscall.IP_MULTICAST_IF, int(idx)); err != nil {
+				return errors.New("failed to set IP_MULTICAST_IF").Base(err)
+			}
 		} else {
 			if err := syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IPV6, IPV6_UNICAST_IF, inf.Index); err != nil {
 				return errors.New("failed to set IPV6_UNICAST_IF").Base(err)
+			}
+			if err := syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IPV6, syscall.IPV6_MULTICAST_IF, inf.Index); err != nil {
+				return errors.New("failed to set IPV6_MULTICAST_IF").Base(err)
 			}
 		}
 	}
@@ -79,6 +85,12 @@ func applyInboundSocketOptions(network string, fd uintptr, config *SocketConfig)
 			if err := syscall.SetsockoptInt(syscall.Handle(fd), syscall.SOL_SOCKET, syscall.SO_KEEPALIVE, 0); err != nil {
 				return errors.New("failed to unset SO_KEEPALIVE", err)
 			}
+		}
+	}
+
+	if config.V6Only {
+		if err := syscall.SetsockoptInt(syscall.Handle(fd), syscall.IPPROTO_IPV6, syscall.IPV6_V6ONLY, 1); err != nil {
+			return errors.New("failed to set IPV6_V6ONLY").Base(err)
 		}
 	}
 
