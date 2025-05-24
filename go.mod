@@ -13,17 +13,17 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pires/go-proxyproto v0.8.1
 	github.com/quic-go/quic-go v0.51.0
-	github.com/refraction-networking/utls v1.7.2
+	github.com/refraction-networking/utls v1.7.3
 	github.com/sagernet/sing v0.5.1
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.10.0
-	github.com/xtls/reality v0.0.0-20240712055506-48f0b2d5ed6d
+	github.com/xtls/reality v0.0.0-20250516070713-4df2ec9a5b47
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.38.0
 	golang.org/x/net v0.40.0
 	golang.org/x/sync v0.14.0
 	golang.org/x/sys v0.33.0
-	google.golang.org/grpc v1.72.0
+	google.golang.org/grpc v1.72.1
 	google.golang.org/protobuf v1.36.6
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.4.1
