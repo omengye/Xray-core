@@ -21,8 +21,10 @@ import (
 
 var (
 	inboundConfigLoader = NewJSONConfigLoader(ConfigCreatorCache{
+		"tunnel":        func() interface{} { return new(DokodemoConfig) },
 		"dokodemo-door": func() interface{} { return new(DokodemoConfig) },
-		"http":          func() interface{} { return new(HTTPServerConfig) },"mixed":         func() interface{} { return new(SocksServerConfig) },
+		"http":          func() interface{} { return new(HTTPServerConfig) },
+		"mixed":         func() interface{} { return new(SocksServerConfig) },
 		"socks":         func() interface{} { return new(SocksServerConfig) },
 		"vless":         func() interface{} { return new(VLessInboundConfig) },
 		"vmess":         func() interface{} { return new(VMessInboundConfig) },
@@ -30,15 +32,17 @@ var (
 	}, "protocol", "settings")
 
 	outboundConfigLoader = NewJSONConfigLoader(ConfigCreatorCache{
-		"blackhole": func() interface{} { return new(BlackholeConfig) },
-		"loopback":  func() interface{} { return new(LoopbackConfig) },
-		"freedom":   func() interface{} { return new(FreedomConfig) },
-		"http":      func() interface{} { return new(HTTPClientConfig) },
-		"socks":     func() interface{} { return new(SocksClientConfig) },
-		"vless":     func() interface{} { return new(VLessOutboundConfig) },
-		"vmess":     func() interface{} { return new(VMessOutboundConfig) },
-		"trojan":    func() interface{} { return new(TrojanClientConfig) },
-		"dns":       func() interface{} { return new(DNSOutboundConfig) },
+		"block":       func() interface{} { return new(BlackholeConfig) },
+		"blackhole":   func() interface{} { return new(BlackholeConfig) },
+		"loopback":    func() interface{} { return new(LoopbackConfig) },
+		"direct":      func() interface{} { return new(FreedomConfig) },
+		"freedom":     func() interface{} { return new(FreedomConfig) },
+		"http":        func() interface{} { return new(HTTPClientConfig) },
+		"socks":       func() interface{} { return new(SocksClientConfig) },
+		"vless":       func() interface{} { return new(VLessOutboundConfig) },
+		"vmess":       func() interface{} { return new(VMessOutboundConfig) },
+		"trojan":      func() interface{} { return new(TrojanClientConfig) },
+		"dns":         func() interface{} { return new(DNSOutboundConfig) },
 	}, "protocol", "settings")
 
 	ctllog = log.New(os.Stderr, "xctl> ", 0)
@@ -237,7 +241,7 @@ func (c *InboundDetourConfig) Build() (*core.InboundHandlerConfig, error) {
 		return nil, errors.New("failed to load inbound detour config for protocol ", c.Protocol).Base(err)
 	}
 	if dokodemoConfig, ok := rawConfig.(*DokodemoConfig); ok {
-		receiverSettings.ReceiveOriginalDestination = dokodemoConfig.Redirect
+		receiverSettings.ReceiveOriginalDestination = dokodemoConfig.FollowRedirect
 	}
 	ts, err := rawConfig.(Buildable).Build()
 	if err != nil {
@@ -375,6 +379,7 @@ type Config struct {
 	FakeDNS          *FakeDNSConfig          `json:"fakeDns"`
 	Observatory      *ObservatoryConfig      `json:"observatory"`
 	BurstObservatory *BurstObservatoryConfig `json:"burstObservatory"`
+	Version          *VersionConfig          `json:"version"`
 }
 
 func (c *Config) findInboundTag(tag string) int {
@@ -441,6 +446,10 @@ func (c *Config) Override(o *Config, fn string) {
 
 	if o.BurstObservatory != nil {
 		c.BurstObservatory = o.BurstObservatory
+	}
+
+	if o.Version != nil {
+		c.Version = o.Version
 	}
 
 	// update the Inbound in slice if the only one in override config has same tag
@@ -579,6 +588,14 @@ func (c *Config) Build() (*core.Config, error) {
 		r, err := c.BurstObservatory.Build()
 		if err != nil {
 			return nil, errors.New("failed to build burst observatory configuration").Base(err)
+		}
+		config.App = append(config.App, serial.ToTypedMessage(r))
+	}
+
+	if c.Version != nil {
+		r, err := c.Version.Build()
+		if err != nil {
+			return nil, errors.New("failed to build version configuration").Base(err)
 		}
 		config.App = append(config.App, serial.ToTypedMessage(r))
 	}
