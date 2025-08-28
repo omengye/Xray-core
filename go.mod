@@ -16,8 +16,6 @@ require (
 	github.com/sagernet/sing v0.5.1
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.11.0
-	github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e
-	github.com/vishvananda/netlink v1.3.1
 	github.com/xtls/reality v0.0.0-20250725142056-5b52a03d4fb7
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.41.0
@@ -26,7 +24,6 @@ require (
 	golang.org/x/sys v0.35.0
 	google.golang.org/grpc v1.75.0
 	google.golang.org/protobuf v1.36.8
-	gvisor.dev/gvisor v0.0.0-20250428193742-2d800c3129d5
 	h12.io/socks v1.0.3
 	lukechampine.com/blake3 v1.4.1
 )
