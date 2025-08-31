@@ -16,8 +16,6 @@ require (
 	github.com/sagernet/sing v0.5.1
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.11.1
-	github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e
-	github.com/vishvananda/netlink v1.3.1
 	github.com/xtls/reality v0.0.0-20250828044527-046fad5ab64f
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.41.0
