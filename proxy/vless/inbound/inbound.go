@@ -31,6 +31,7 @@ import (
 	"github.com/xtls/xray-core/proxy/vless"
 	"github.com/xtls/xray-core/proxy/vless/encoding"
 	"github.com/xtls/xray-core/proxy/vless/encryption"
+	"github.com/xtls/xray-core/transport"
 	"github.com/xtls/xray-core/transport/internet/reality"
 	"github.com/xtls/xray-core/transport/internet/stat"
 	"github.com/xtls/xray-core/transport/internet/tls"
@@ -92,7 +93,7 @@ func New(ctx context.Context, config *Config, dc dns.Client, validator vless.Val
 			nfsSKeysBytes = append(nfsSKeysBytes, b)
 		}
 		handler.decryption = &encryption.ServerInstance{}
-		if err := handler.decryption.Init(nfsSKeysBytes, config.XorMode, config.Seconds, config.Padding); err != nil {
+		if err := handler.decryption.Init(nfsSKeysBytes, config.XorMode, config.SecondsFrom, config.SecondsTo, config.Padding); err != nil {
 			return nil, errors.New("failed to use decryption").Base(err).AtError()
 		}
 	}
@@ -175,9 +176,6 @@ func isMuxAndNotXUDP(request *protocol.RequestHeader, first *buf.Buffer) bool {
 
 // Close implements common.Closable.Close().
 func (h *Handler) Close() error {
-	if h.decryption != nil {
-		h.decryption.Close()
-	}
 	return errors.Combine(common.Close(h.validator))
 }
 
@@ -505,8 +503,8 @@ func (h *Handler) Process(ctx context.Context, network net.Network, connection s
 				var t reflect.Type
 				var p uintptr
 				if commonConn, ok := connection.(*encryption.CommonConn); ok {
-					if _, ok := commonConn.Conn.(*encryption.XorConn); ok || !proxy.IsRAWTransport(iConn) {
-						inbound.CanSpliceCopy = 3 // full-random xorConn / non-RAW transport can not use Linux Splice
+					if _, ok := commonConn.Conn.(*encryption.XorConn); ok || !proxy.IsRAWTransportWithoutSecurity(iConn) {
+						inbound.CanSpliceCopy = 3 // full-random xorConn / non-RAW transport / another securityConn should not be penetrated
 					}
 					t = reflect.TypeOf(commonConn).Elem()
 					p = uintptr(unsafe.Pointer(commonConn))
@@ -551,89 +549,24 @@ func (h *Handler) Process(ctx context.Context, network net.Network, connection s
 		ctx = session.ContextWithAllowedNetwork(ctx, net.Network_UDP)
 	}
 
-	sessionPolicy = h.policyManager.ForLevel(request.User.Level)
-	ctx, cancel := context.WithCancel(ctx)
-	timer := signal.CancelAfterInactivity(ctx, cancel, sessionPolicy.Timeouts.ConnectionIdle)
-	inbound.Timer = timer
-	ctx = policy.ContextWithBufferPolicy(ctx, sessionPolicy.Buffer)
-
-	link, err := dispatcher.Dispatch(ctx, request.Destination())
-	if err != nil {
-		return errors.New("failed to dispatch request to ", request.Destination()).Base(err).AtWarning()
-	}
-
-	serverReader := link.Reader // .(*pipe.Reader)
-	serverWriter := link.Writer // .(*pipe.Writer)
 	trafficState := proxy.NewTrafficState(userSentID)
-	postRequest := func() error {
-		defer timer.SetTimeout(sessionPolicy.Timeouts.DownlinkOnly)
-
-		// default: clientReader := reader
-		clientReader := encoding.DecodeBodyAddons(reader, request, requestAddons)
-
-		var err error
-
-		if requestAddons.Flow == vless.XRV {
-			ctx1 := session.ContextWithInbound(ctx, nil) // TODO enable splice
-			clientReader = proxy.NewVisionReader(clientReader, trafficState, true, ctx1)
-			err = encoding.XtlsRead(clientReader, serverWriter, timer, connection, input, rawInput, trafficState, nil, true, ctx1)
-		} else {
-			// from clientReader.ReadMultiBuffer to serverWriter.WriteMultiBuffer
-			err = buf.Copy(clientReader, serverWriter, buf.UpdateActivity(timer))
-		}
-
-		if err != nil {
-			return errors.New("failed to transfer request payload").Base(err).AtInfo()
-		}
-
-		return nil
+	clientReader := encoding.DecodeBodyAddons(reader, request, requestAddons)
+	if requestAddons.Flow == vless.XRV {
+		clientReader = proxy.NewVisionReader(clientReader, trafficState, true, ctx, connection, input, rawInput, nil)
 	}
 
-	getResponse := func() error {
-		defer timer.SetTimeout(sessionPolicy.Timeouts.UplinkOnly)
-
-		bufferWriter := buf.NewBufferedWriter(buf.NewWriter(connection))
-		if err := encoding.EncodeResponseHeader(bufferWriter, request, responseAddons); err != nil {
-			return errors.New("failed to encode response header").Base(err).AtWarning()
-		}
-
-		// default: clientWriter := bufferWriter
-		clientWriter := encoding.EncodeBodyAddons(bufferWriter, request, requestAddons, trafficState, false, ctx)
-		multiBuffer, err1 := serverReader.ReadMultiBuffer()
-		if err1 != nil {
-			return err1 // ...
-		}
-		if err := clientWriter.WriteMultiBuffer(multiBuffer); err != nil {
-			return err // ...
-		}
-		// Flush; bufferWriter.WriteMultiBuffer now is bufferWriter.writer.WriteMultiBuffer
-		if err := bufferWriter.SetBuffered(false); err != nil {
-			return errors.New("failed to write A response payload").Base(err).AtWarning()
-		}
-
-		var err error
-		if requestAddons.Flow == vless.XRV {
-			err = encoding.XtlsWrite(serverReader, clientWriter, timer, connection, trafficState, nil, false, ctx)
-		} else {
-			// from serverReader.ReadMultiBuffer to clientWriter.WriteMultiBuffer
-			err = buf.Copy(serverReader, clientWriter, buf.UpdateActivity(timer))
-		}
-		if err != nil {
-			return errors.New("failed to transfer response payload").Base(err).AtInfo()
-		}
-		// Indicates the end of response payload.
-		switch responseAddons.Flow {
-		default:
-		}
-
-		return nil
+	bufferWriter := buf.NewBufferedWriter(buf.NewWriter(connection))
+	if err := encoding.EncodeResponseHeader(bufferWriter, request, responseAddons); err != nil {
+		return errors.New("failed to encode response header").Base(err).AtWarning()
 	}
+	clientWriter := encoding.EncodeBodyAddons(bufferWriter, request, requestAddons, trafficState, false, ctx, connection, nil)
+	bufferWriter.SetFlushNext()
 
-	if err := task.Run(ctx, task.OnSuccess(postRequest, task.Close(serverWriter)), getResponse); err != nil {
-		common.Interrupt(serverReader)
-		common.Interrupt(serverWriter)
-		return errors.New("connection ends").Base(err).AtInfo()
+	if err := dispatcher.DispatchLink(ctx, request.Destination(), &transport.Link{
+		Reader: clientReader,
+		Writer: clientWriter},
+	); err != nil {
+		return errors.New("failed to dispatch request").Base(err)
 	}
-
 	return nil
 }

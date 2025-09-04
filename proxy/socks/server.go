@@ -75,7 +75,7 @@ func (s *Server) Process(ctx context.Context, network net.Network, conn stat.Con
 	inbound.User = &protocol.MemoryUser{
 		Level: s.config.UserLevel,
 	}
-	if !proxy.IsRAWTransport(conn) {
+	if !proxy.IsRAWTransportWithoutSecurity(conn) {
 		inbound.CanSpliceCopy = 3
 	}
 
@@ -161,7 +161,7 @@ func (s *Server) processTCP(ctx context.Context, conn stat.Connection, dispatche
 			inbound.CanSpliceCopy = 1
 		}
 		if err := dispatcher.DispatchLink(ctx, dest, &transport.Link{
-			Reader: &buf.TimeoutWrapperReader{Reader: reader},
+			Reader: reader,
 			Writer: buf.NewWriter(conn)},
 		); err != nil {
 			return errors.New("failed to dispatch request").Base(err)
