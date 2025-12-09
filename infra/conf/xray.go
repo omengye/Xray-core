@@ -3,8 +3,6 @@ package conf
 import (
 	"context"
 	"encoding/json"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -43,8 +41,6 @@ var (
 		"trojan":      func() interface{} { return new(TrojanClientConfig) },
 		"dns":         func() interface{} { return new(DNSOutboundConfig) },
 	}, "protocol", "settings")
-
-	ctllog = log.New(os.Stderr, "xctl> ", 0)
 )
 
 type SniffingConfig struct {
