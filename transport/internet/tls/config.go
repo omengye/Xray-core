@@ -281,51 +281,79 @@ func (c *Config) parseServerName() string {
 }
 
 func (r *RandCarrier) verifyPeerCert(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) (err error) {
-	// extract x509 certificates from rawCerts(verifiedChains will be nil if InsecureSkipVerify is true)
+	// extract x509 certificates from rawCerts (verifiedChains will be nil if InsecureSkipVerify is true)
 	certs := make([]*x509.Certificate, len(rawCerts))
 	for i, asn1Data := range rawCerts {
 		certs[i], _ = x509.ParseCertificate(asn1Data)
 	}
+	if len(certs) == 0 {
+		return errors.New("unexpected certs")
+	}
+	if certs[0].IsCA {
+		slices.Reverse(certs)
+	}
 
 	// directly return success if pinned cert is leaf
-	// or add the CA to RootCAs if pinned cert is CA(and can be used in VerifyPeerCertInNames for Self signed CA)
-	RootCAs := r.RootCAs
+	// or replace RootCAs if pinned cert is CA (and can be used in VerifyPeerCertInNames)
+	CAs := r.RootCAs
+	var verifyResult verifyResult
+	var verifiedCert *x509.Certificate
 	if r.PinnedPeerCertSha256 != nil {
-		verifyResult, verifiedCert := verifyChain(certs, r.PinnedPeerCertSha256)
+		verifyResult, verifiedCert = verifyChain(certs, r.PinnedPeerCertSha256)
 		switch verifyResult {
 		case certNotFound:
-			return errors.New("peer cert is unrecognized")
+			return errors.New("peer cert is unrecognized (againsts pinnedPeerCertSha256)")
 		case foundLeaf:
 			return nil
 		case foundCA:
-			RootCAs = x509.NewCertPool()
-			RootCAs.AddCert(verifiedCert)
+			CAs = x509.NewCertPool()
+			CAs.AddCert(verifiedCert)
 		default:
-			panic("impossible PinnedPeerCertificateSha256 verify result")
+			panic("impossible pinnedPeerCertSha256 verify result")
 		}
 	}
 
-	if r.VerifyPeerCertInNames != nil {
-		if len(r.VerifyPeerCertInNames) > 0 {
-			opts := x509.VerifyOptions{
-				Roots:         RootCAs,
-				CurrentTime:   time.Now(),
-				Intermediates: x509.NewCertPool(),
-			}
-			for _, cert := range certs[1:] {
-				opts.Intermediates.AddCert(cert)
-			}
-			for _, opts.DNSName = range r.VerifyPeerCertInNames {
-				if _, err := certs[0].Verify(opts); err == nil {
-					return nil
-				}
+	if r.VerifyPeerCertInNames != nil { // RAW's Dial() may make it empty but not nil
+		opts := x509.VerifyOptions{
+			Roots:         CAs,
+			CurrentTime:   time.Now(),
+			Intermediates: x509.NewCertPool(),
+		}
+		for _, cert := range certs[1:] {
+			opts.Intermediates.AddCert(cert)
+		}
+		for _, opts.DNSName = range r.VerifyPeerCertInNames {
+			if _, err := certs[0].Verify(opts); err == nil {
+				return nil
 			}
 		}
+		if verifyResult == foundCA {
+			errors.New("peer cert is invalid (againsts pinned CA and verifyPeerCertInNames)")
+		}
+		return errors.New("peer cert is invalid (againsts root CAs and verifyPeerCertInNames)")
 	}
-	return nil
+
+	if verifyResult == foundCA { // if found CA, we need to verify here
+		opts := x509.VerifyOptions{
+			Roots:         CAs,
+			CurrentTime:   time.Now(),
+			Intermediates: x509.NewCertPool(),
+			DNSName:       r.Config.ServerName,
+		}
+		for _, cert := range certs[1:] {
+			opts.Intermediates.AddCert(cert)
+		}
+		if _, err := certs[0].Verify(opts); err == nil {
+			return nil
+		}
+		return errors.New("peer cert is invalid (againsts pinned CA and serverName)")
+	}
+
+	return nil // len(r.PinnedPeerCertSha256)==nil && len(r.VerifyPeerCertInNames)==nil
 }
 
 type RandCarrier struct {
+	Config                *tls.Config
 	RootCAs               *x509.CertPool
 	VerifyPeerCertInNames []string
 	PinnedPeerCertSha256  [][]byte
@@ -366,10 +394,16 @@ func (c *Config) GetTLSConfig(opts ...Option) *tls.Config {
 		SessionTicketsDisabled: !c.EnableSessionResumption,
 		VerifyPeerCertificate:  randCarrier.verifyPeerCert,
 	}
+	randCarrier.Config = config
 	if len(c.VerifyPeerCertInNames) > 0 {
 		config.InsecureSkipVerify = true
 	} else {
 		randCarrier.VerifyPeerCertInNames = nil
+	}
+	if len(c.PinnedPeerCertSha256) > 0 {
+		config.InsecureSkipVerify = true
+	} else {
+		randCarrier.PinnedPeerCertSha256 = nil
 	}
 
 	for _, opt := range opts {
@@ -525,17 +559,16 @@ const (
 	foundCA
 )
 
-func verifyChain(certs []*x509.Certificate, PinnedPeerCertificateSha256 [][]byte) (verifyResult, *x509.Certificate) {
+func verifyChain(certs []*x509.Certificate, pinnedPeerCertSha256 [][]byte) (verifyResult, *x509.Certificate) {
 	for _, cert := range certs {
 		certHash := GenerateCertHash(cert)
-		for _, c := range PinnedPeerCertificateSha256 {
+		for _, c := range pinnedPeerCertSha256 {
 			if hmac.Equal(certHash, c) {
 				if cert.IsCA {
 					return foundCA, cert
 				} else {
 					return foundLeaf, cert
 				}
-
 			}
 		}
 	}
