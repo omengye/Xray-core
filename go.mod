@@ -16,6 +16,7 @@ require (
 	github.com/sagernet/sing v0.5.1
 	github.com/seiflotfy/cuckoofilter v0.0.0-20240715131351-a2f2c23f1771
 	github.com/stretchr/testify v1.11.1
+	github.com/vishvananda/netlink v1.1.1-0.20211118161826-650dca95af54
 	github.com/xtls/reality v0.0.0-20251014195629-e4eec4520535
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.47.0
@@ -23,6 +24,7 @@ require (
 	golang.org/x/net v0.49.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/sys v0.40.0
+	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
 	gvisor.dev/gvisor v0.0.0-20260109181451-4be7c433dae2
@@ -34,12 +36,14 @@ require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20200812162917-85c65e2d0165 // indirect
+	github.com/google/btree v1.1.2 // indirect
 	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
+	github.com/vishvananda/netns v0.0.0-20210104183010-2eb08e3e575f // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
