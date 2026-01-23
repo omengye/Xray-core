@@ -390,11 +390,12 @@ type UdpHop struct {
 }
 
 type HysteriaConfig struct {
-	Version int32     `json:"version"`
-	Auth    string    `json:"auth"`
-	Up      Bandwidth `json:"up"`
-	Down    Bandwidth `json:"down"`
-	UdpHop  UdpHop    `json:"udphop"`
+	Version    int32     `json:"version"`
+	Auth       string    `json:"auth"`
+	Congestion string    `json:"congestion"`
+	Up         Bandwidth `json:"up"`
+	Down       Bandwidth `json:"down"`
+	UdpHop     UdpHop    `json:"udphop"`
 
 	InitStreamReceiveWindow     uint64 `json:"initStreamReceiveWindow"`
 	MaxStreamReceiveWindow      uint64 `json:"maxStreamReceiveWindow"`
@@ -409,6 +410,7 @@ func (c *HysteriaConfig) Build() (proto.Message, error) {
 	if c.Version != 2 {
 		return nil, errors.New("version != 2")
 	}
+
 	up, err := c.Up.Bps()
 	if err != nil {
 		return nil, err
@@ -417,6 +419,12 @@ func (c *HysteriaConfig) Build() (proto.Message, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	c.Congestion = strings.ToLower(c.Congestion)
+	if c.Congestion == "force-brutal" && up == 0 {
+		return nil, errors.New("force-brutal require up")
+	}
+
 	var hop *PortList
 	if err := json.Unmarshal(c.UdpHop.PortList, &hop); err != nil {
 		hop = &PortList{}
@@ -454,6 +462,7 @@ func (c *HysteriaConfig) Build() (proto.Message, error) {
 	config := &hysteria.Config{}
 	config.Version = c.Version
 	config.Auth = c.Auth
+	config.Congestion = c.Congestion
 	config.Up = up
 	config.Down = down
 	config.Ports = hop.Build().Ports()
@@ -586,6 +595,9 @@ func (c *TLSConfig) Build() (proto.Message, error) {
 	}
 	serverName := c.ServerName
 	config.AllowInsecure = c.Insecure
+	if config.AllowInsecure {
+		errors.PrintDeprecatedFeatureWarning("allowInsecure", "pinnedPeerCertSha256")
+	}
 	if len(c.ServerName) > 0 {
 		config.ServerName = serverName
 	}
