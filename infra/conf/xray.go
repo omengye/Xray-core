@@ -31,6 +31,7 @@ var (
 		"vless":         func() interface{} { return new(VLessInboundConfig) },
 		"vmess":         func() interface{} { return new(VMessInboundConfig) },
 		"trojan":        func() interface{} { return new(TrojanServerConfig) },
+		"hysteria":      func() interface{} { return new(HysteriaServerConfig) },
 		"tun":           func() interface{} { return new(TunConfig) },
 	}, "protocol", "settings")
 
