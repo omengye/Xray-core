@@ -18,6 +18,5 @@ func init() {
 		cmdMLDSA65,
 		cmdMLKEM768,
 		cmdVLESSEnc,
-		cmdBuildMphCache,
 	)
 }
