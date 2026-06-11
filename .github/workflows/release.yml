@@ -14,6 +14,7 @@ on:
 jobs:
   check-assets:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     steps:
       - name: Restore Geodat Cache
         uses: actions/cache/restore@v5
@@ -87,6 +88,7 @@ jobs:
       fail-fast: false
 
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}
@@ -133,6 +135,9 @@ jobs:
             go build -o build_assets/xray.exe -trimpath -buildvcs=false -gcflags="all=-l=4" -ldflags="-X github.com/xtls/xray-core/core.build=${COMMID} -s -w -buildid=" -v ./main
             # The line below is for without running conhost.exe version. Commented for not being used. Provided for reference.
             # go build -o build_assets/wxray.exe -trimpath -buildvcs=false -gcflags="all=-l=4" -ldflags="-H windowsgui -X github.com/xtls/xray-core/core.build=${COMMID} -s -w -buildid=" -v ./main
+          elif [[ ${GOOS} == 'android' ]]; then
+            echo 'Building Xray for Android...'
+            go build -o build_assets/xray -trimpath -buildvcs=false -gcflags="all=-l=4" -ldflags="-X github.com/xtls/xray-core/core.build=${COMMID} -s -w -buildid= -checklinkname=0" -v ./main
           else
             echo 'Building Xray...'
             if [[ ${GOARCH} == 'mips' || ${GOARCH} == 'mipsle' ]]; then
@@ -161,8 +166,10 @@ jobs:
         run: |
           mv -f resources/geo* build_assets/
           if [[ ${GOOS} == 'windows' ]]; then
-            echo 'CreateObject("Wscript.Shell").Run "xray.exe -config config.json",0' > build_assets/xray_no_window.vbs
-            echo 'Start-Process -FilePath ".\xray.exe" -ArgumentList "-config .\config.json" -WindowStyle Hidden' > build_assets/xray_no_window.ps1
+            cp .github/build/windows/* build_assets/
+          fi
+          if [[ ${GOOS} == 'windows' ]]; then
+            echo 'Adding Wintun into packages'
             if [[ ${GOARCH} == 'amd64' ]]; then
               mv resources/wintun/bin/amd64/wintun.dll build_assets/
             fi
@@ -172,7 +179,7 @@ jobs:
             if [[ ${GOARCH} == 'arm64' ]]; then
               mv resources/wintun/bin/arm64/wintun.dll build_assets/
             fi
-            mv resources/wintun/LICENSE.txt build_assets/LICENSE-wintun.txt
+            mv resources/wintun/LICENSE.txt build_assets/LICENSE-Wintun
           fi
 
       - name: Copy README.md & LICENSE
