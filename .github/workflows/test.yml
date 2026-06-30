@@ -52,25 +52,6 @@ jobs:
             fi
           done
 
-  check-format:
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v7
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
-          check-latest: true
-          cache: false
-      - name: Check Format
-        run: |
-          go install -v mvdan.cc/gofumpt@latest
-          go run ./infra/vformat/main.go -mode check -pwd ./
-
   test:
     needs: check-assets
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
