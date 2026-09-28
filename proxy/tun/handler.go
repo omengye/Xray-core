@@ -123,7 +123,7 @@ func (t *Handler) Start() error {
 			iface := updater.Get()
 			if iface == nil {
 				errors.LogInfo(context.Background(), "[tun] falied to set interface > iface == nil")
-				return nil
+				return errors.New("iface not found")
 			}
 			return c.Control(func(fd uintptr) {
 				addrPort, _ := netip.ParseAddrPort(address)
@@ -163,6 +163,16 @@ func (t *Handler) Start() error {
 		_ = tunStack.Close()
 		_ = tunInterface.Close()
 		return err
+	}
+
+	// Platform-specific system DNS takeover, where the platform implements it.
+	// Non-fatal: a failure leaves DNS management with the OS.
+	if c, ok := tunInterface.(interface {
+		ConfigureSystemDNS(context.Context, string) error
+	}); ok {
+		if err := c.ConfigureSystemDNS(t.ctx, t.tag); err != nil {
+			errors.LogInfoInner(t.ctx, err, "[tun] system DNS not configured")
+		}
 	}
 
 	t.stack = tunStack
